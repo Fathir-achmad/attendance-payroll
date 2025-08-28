@@ -14,14 +14,14 @@ var DB *gorm.DB
 func ConnectDB() {
     dsn := os.Getenv("DATABASE_URL")
     if dsn == "" {
-        log.Fatal("DATABASE_URL not set")
+        dsn = "host=localhost user=postgres password=fathiras1905 dbname=absensi port=5432 sslmode=disable"
     }
 
     db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
     if err != nil {
-        log.Fatalf("Failed to connect to database: %v", err)
+        log.Fatal("Failed to connect to database:", err)
     }
 
     DB = db
-    fmt.Println("✅ Connected to database successfully")
+    fmt.Println("✅ Connected to database")
 }
