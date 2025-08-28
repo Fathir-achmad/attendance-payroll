@@ -4,8 +4,8 @@ import (
     "attendance-payroll/config"
     "attendance-payroll/models"
     "attendance-payroll/routes"
-
     "github.com/gin-gonic/gin"
+    "os"
 )
 
 func main() {
@@ -16,5 +16,11 @@ func main() {
 
     routes.SetupRoutes(r)
 
-    r.Run(":8080")
+    // ambil port dari env Railway
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080" // fallback lokal
+    }
+
+    r.Run(":" + port)
 }
