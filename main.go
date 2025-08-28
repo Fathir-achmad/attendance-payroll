@@ -1,30 +1,31 @@
 package main
 
 import (
-	"attendance-payroll/config"
-	"attendance-payroll/models"
-	"attendance-payroll/routes"
-	"os"
-
-	"github.com/gin-gonic/gin"
+    "attendance-payroll/config"
+    "attendance-payroll/models"
+    "attendance-payroll/routes"
+    "github.com/gin-gonic/gin"
+    "os"
+    "fmt"
 )
 
 func main() {
-	r := gin.Default()
+    r := gin.Default()
 
-	config.ConnectDB()
-	config.DB.AutoMigrate(&models.Department{}, &models.Employee{}, &models.Attendance{}, &models.Payroll{})
+    config.ConnectDB()
+    config.DB.AutoMigrate(&models.Department{}, &models.Employee{}, &models.Attendance{}, &models.Payroll{})
 
-	// seed default dept biar register bisa jalan
-	config.DB.FirstOrCreate(&models.Department{}, models.Department{Name: "Information Technology"})
+    // health check
+    r.GET("/", func(c *gin.Context) {
+        c.JSON(200, gin.H{"message": "Attendance Payroll API running 🚀"})
+    })
 
-	routes.SetupRoutes(r)
+    routes.SetupRoutes(r)
 
-	// ambil port dari env Railway
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8080" // fallback lokal
-	}
-
-	r.Run(":" + port)
+    port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
+    fmt.Println("🚀 Server running on port " + port)
+    r.Run(":" + port)
 }

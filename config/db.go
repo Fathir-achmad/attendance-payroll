@@ -1,12 +1,10 @@
 package config
 
 import (
-    "fmt"
-    "log"
-    "os"
-
     "gorm.io/driver/postgres"
     "gorm.io/gorm"
+    "log"
+    "os"
 )
 
 var DB *gorm.DB
@@ -14,7 +12,7 @@ var DB *gorm.DB
 func ConnectDB() {
     dsn := os.Getenv("DATABASE_URL")
     if dsn == "" {
-        dsn = "host=localhost user=postgres password=fathiras1905 dbname=absensi port=5432 sslmode=disable"
+        log.Fatal("DATABASE_URL is not set")
     }
 
     db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
@@ -23,5 +21,5 @@ func ConnectDB() {
     }
 
     DB = db
-    fmt.Println("✅ Connected to database")
+    log.Println("✅ Connected to database")
 }
