@@ -13,12 +13,21 @@ import (
 func GetPayroll(c *gin.Context) {
 	userID := c.GetUint("userID")
 
-	// Tentukan periode bulan ini
 	now := time.Now()
 	periodStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
 	periodEnd := periodStart.AddDate(0, 1, -1)
 
-	// Ambil semua attendance untuk user di bulan ini, preload employee + department
+	// 1. Cek apakah payroll sudah ada di DB
+	var payroll models.Payroll
+	if err := config.DB.Preload("Employee").Preload("Employee.Department").
+		Where("employee_id = ? AND period_start = ? AND period_end = ?", userID, periodStart, periodEnd).
+		First(&payroll).Error; err == nil {
+		// Payroll sudah ada → langsung return
+		c.JSON(http.StatusOK, payroll)
+		return
+	}
+
+	// 2. Kalau belum ada, hitung dari attendance
 	var attendances []models.Attendance
 	if err := config.DB.Preload("Employee").Preload("Employee.Department").
 		Where("employee_id = ? AND date BETWEEN ? AND ?", userID, periodStart, periodEnd).
@@ -27,9 +36,8 @@ func GetPayroll(c *gin.Context) {
 		return
 	}
 
-	// Hitung gaji
-	dailyRate := 100000.0
-	totalSalary := 0.0
+	dailyRate := 100000
+	totalSalary := 0
 
 	for _, att := range attendances {
 		if att.CheckInAt != nil && att.CheckOutAt != nil {
@@ -40,20 +48,22 @@ func GetPayroll(c *gin.Context) {
 		}
 	}
 
-	payroll := models.Payroll{
+	payroll = models.Payroll{
 		EmployeeID:  userID,
-		Amount:      totalSalary,
+		Amount:      float64(totalSalary),
 		PeriodStart: periodStart,
 		PeriodEnd:   periodEnd,
 	}
 
-	// Isi Employee ke payroll
 	if len(attendances) > 0 {
 		payroll.Employee = attendances[0].Employee
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"employee_id": userID,
-		"payrolls":    []models.Payroll{payroll},
-	})
+	// 3. Simpan payroll baru ke DB
+	if err := config.DB.Create(&payroll).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save payroll"})
+		return
+	}
+
+	c.JSON(http.StatusOK, payroll)
 }
