@@ -1,0 +1,151 @@
+{
+  "info": {
+    "name": "Attendance Payroll API",
+    "_postman_id": "d8c13c53-74d2-44bc-b94a-1f8af4dbe999",
+    "description": "API untuk sistem absensi & payroll karyawan dengan autentikasi JWT.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth - Register",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Fathir achmad\",\n  \"username\": \"fathir\",\n  \"password\": \"123456\",\n  \"department_id\": 1\n}"
+        }
+      }
+    },
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "url": "{{base_url}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"fathir\",\n  \"password\": \"123456\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Employee - Get Profile",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{base_url}}/employee/me"
+      }
+    },
+    {
+      "name": "Employee - Update Profile",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/employee/me",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"New Name\",\n  \"password\": \"newpassword\",\n  \"department_id\": 2\n}"
+        }
+      }
+    },
+    {
+      "name": "Employee - Delete Account",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{base_url}}/employee/me"
+      }
+    },
+    {
+      "name": "Attendance - Check-in",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/attendances/checkin"
+      }
+    },
+    {
+      "name": "Attendance - Check-out",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/attendances/checkout"
+      }
+    },
+    {
+      "name": "Payroll - Get Payroll",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{base_url}}/attendances/payroll"
+      }
+    },
+    {
+      "name": "Departments - Get All",
+      "request": {
+        "method": "GET",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{base_url}}/departments"
+      }
+    },
+    {
+      "name": "Departments - Create",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/departments",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Finance\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Departments - Update",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/departments/1",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"HRD\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Departments - Delete",
+      "request": {
+        "method": "DELETE",
+        "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
+        "url": "{{base_url}}/departments/1"
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://attendance-payroll-production.up.railway.app/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    }
+  ]
+}

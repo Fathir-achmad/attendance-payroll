@@ -1,0 +1,184 @@
+openapi: 3.0.0
+info:
+  title: Attendance Payroll API
+  description: API untuk sistem absensi & payroll karyawan dengan autentikasi JWT.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api
+    description: Local server
+
+paths:
+  /auth/register:
+    post:
+      summary: Register user baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+                department_id:
+                  type: integer
+              required: [name, username, password, department_id]
+      responses:
+        "200":
+          description: User berhasil registrasi
+
+  /auth/login:
+    post:
+      summary: Login untuk mendapatkan JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required: [username, password]
+      responses:
+        "200":
+          description: Login sukses, token dikembalikan
+
+  /employee/me:
+    get:
+      summary: Ambil profile user (JWT Required)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Data profile user
+    patch:
+      summary: Update profile user
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                password:
+                  type: string
+                department_id:
+                  type: integer
+      responses:
+        "200":
+          description: Profile updated
+    delete:
+      summary: Hapus akun user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Account deleted
+
+  /attendances/checkin:
+    post:
+      summary: Check-in karyawan
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Berhasil check-in
+
+  /attendances/checkout:
+    post:
+      summary: Check-out karyawan
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Berhasil check-out
+
+  /attendances/payroll:
+    get:
+      summary: Ambil payroll user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Payroll data
+
+  /departments:
+    get:
+      summary: Ambil semua department
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Daftar department
+    post:
+      summary: Tambah department baru
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+              required: [name]
+      responses:
+        "201":
+          description: Department created
+
+  /departments/{id}:
+    patch:
+      summary: Update department
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+      responses:
+        "200":
+          description: Department updated
+    delete:
+      summary: Hapus department
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Department deleted
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
