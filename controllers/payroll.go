@@ -1,69 +1,85 @@
 package controllers
 
 import (
-	"net/http"
-	"time"
-
 	"attendance-payroll/config"
 	"attendance-payroll/models"
-
 	"github.com/gin-gonic/gin"
+	"net/http"
+	"time"
+	"sort"
 )
+
+type PayrollRequest struct {
+	Start string `json:"start" binding:"required"` // format MM-YYYY
+	End   string `json:"end" binding:"required"`   // format MM-YYYY
+}
 
 func GetPayroll(c *gin.Context) {
 	userID := c.GetUint("userID")
 
-	now := time.Now()
-	periodStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	periodEnd := periodStart.AddDate(0, 1, -1)
-
-	// 1. Cek apakah payroll sudah ada di DB
-	var payroll models.Payroll
-	if err := config.DB.Preload("Employee").Preload("Employee.Department").
-		Where("employee_id = ? AND period_start = ? AND period_end = ?", userID, periodStart, periodEnd).
-		First(&payroll).Error; err == nil {
-		// Payroll sudah ada → langsung return
-		c.JSON(http.StatusOK, payroll)
+	var input PayrollRequest
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	// 2. Kalau belum ada, hitung dari attendance
+	// parse MM-YYYY → time.Time (awal bulan)
+	startDate, err := time.Parse("01-2006", input.Start)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid start format (use MM-YYYY)"})
+		return
+	}
+
+	endDate, err := time.Parse("01-2006", input.End)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid end format (use MM-YYYY)"})
+		return
+	}
+	// akhir bulan endDate
+	endDate = endDate.AddDate(0, 1, -1)
+
 	var attendances []models.Attendance
-	if err := config.DB.Preload("Employee").Preload("Employee.Department").
-		Where("employee_id = ? AND date BETWEEN ? AND ?", userID, periodStart, periodEnd).
+	if err := config.DB.Preload("Employee").
+		Where("employee_id = ? AND date BETWEEN ? AND ?", userID, startDate, endDate).
 		Find(&attendances).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	dailyRate := 100000
-	totalSalary := 0
+	dailyRate := 100000.0
+	payrollByMonth := map[string]float64{}
 
 	for _, att := range attendances {
 		if att.CheckInAt != nil && att.CheckOutAt != nil {
 			workHours := att.CheckOutAt.Sub(*att.CheckInAt).Hours()
 			if workHours >= 8 {
-				totalSalary += dailyRate
+				monthKey := att.Date.Format("January 2006") // contoh: "April 2025"
+				payrollByMonth[monthKey] += dailyRate
 			}
 		}
 	}
 
-	payroll = models.Payroll{
-		EmployeeID:  userID,
-		Amount:      float64(totalSalary),
-		PeriodStart: periodStart,
-		PeriodEnd:   periodEnd,
+	// urutkan berdasarkan waktu
+	months := make([]string, 0, len(payrollByMonth))
+	for m := range payrollByMonth {
+		months = append(months, m)
+	}
+	sort.Slice(months, func(i, j int) bool {
+		ti, _ := time.Parse("January 2006", months[i])
+		tj, _ := time.Parse("January 2006", months[j])
+		return ti.Before(tj)
+	})
+
+	var payrolls []gin.H
+	for _, m := range months {
+		payrolls = append(payrolls, gin.H{
+			"month":  m,
+			"amount": payrollByMonth[m],
+		})
 	}
 
-	if len(attendances) > 0 {
-		payroll.Employee = attendances[0].Employee
-	}
-
-	// 3. Simpan payroll baru ke DB
-	if err := config.DB.Create(&payroll).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save payroll"})
-		return
-	}
-
-	c.JSON(http.StatusOK, payroll)
+	c.JSON(http.StatusOK, gin.H{
+		"employee_id": userID,
+		"payrolls":    payrolls,
+	})
 }

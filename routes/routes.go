@@ -19,7 +19,7 @@ func SetupRoutes(r *gin.Engine) {
         {
             auth.POST("/checkin", controllers.CheckIn)
             auth.POST("/checkout", controllers.CheckOut)
-            auth.GET("/payroll", controllers.GetPayroll)
+            auth.POST("/payroll", controllers.GetPayroll)
         }
 
         // CRUD Profile

@@ -86,7 +86,7 @@
     {
       "name": "Payroll - Get Payroll",
       "request": {
-        "method": "GET",
+        "method": "POST",
         "header": [{ "key": "Authorization", "value": "Bearer {{token}}" }],
         "url": "{{base_url}}/attendances/payroll"
       }
