@@ -28,11 +28,15 @@ func CreateDepartment(c *gin.Context) {
 // Get All Departments
 func GetDepartments(c *gin.Context) {
     var departments []models.Department
-    if err := config.DB.Preload("Employees").Find(&departments).Error; err != nil {
+    if err := config.DB.
+        Preload("Employees").
+        Preload("Employees.Department").
+        Find(&departments).Error; err != nil {
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
         return
     }
-    c.JSON(http.StatusOK, departments)
+
+    c.JSON(http.StatusOK, gin.H{"data": departments})
 }
 
 // Update Department
